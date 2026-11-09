@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бесконечный Тренажер — Охранные Системы</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0b0f19;
+            color: #f1f5f9;
+        }
+        .custom-glass {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .option-card {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-card:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: #3b82f6;
+            background-color: rgba(30, 41, 59, 0.9);
+        }
+        .btn-glow {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-blue-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="custom-glass sticky top-0 z-50 border-b border-slate-800/80 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="p-2.5 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl text-white font-black text-xl shadow-lg">
+                    <i class="fas fa-infinity animate-spin" style="animation-duration: 12s;"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-base md:text-lg leading-tight text-white flex items-center gap-2">
+                        Бесконечный Тренажер
+                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30">ALL TOPICS</span>
+                    </h1>
+                    <p class="text-xs text-slate-400">Полное погружение в конспект «Охранные системы»</p>
+                </div>
+            </div>
+
+            <!-- Global Live Statistics -->
+            <div class="flex items-center gap-2 text-xs">
+                <div class="flex items-center space-x-1.5 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <i class="fas fa-check-circle text-emerald-400"></i>
+                    <span class="text-slate-400">Верно:</span>
+                    <span id="stat-correct" class="font-bold text-emerald-400">0</span>
+                </div>
+                <div class="flex items-center space-x-1.5 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <i class="fas fa-bullseye text-blue-400"></i>
+                    <span class="text-slate-400">Точность:</span>
+                    <span id="stat-accuracy" class="font-bold text-blue-400">0%</span>
+                </div>
+                <div class="flex items-center space-x-1.5 bg-slate-900/90 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <i class="fas fa-fire text-orange-500"></i>
+                    <span id="stat-streak" class="font-bold text-orange-500">0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-3xl mx-auto px-4 py-8 flex-grow w-full flex flex-col justify-center">
+
+        <!-- Filter / Topic Selector -->
+        <div class="mb-6 flex items-center justify-between gap-2 overflow-x-auto pb-2">
+            <span class="text-xs text-slate-400 font-medium whitespace-nowrap">Тема:</span>
+            <select id="topic-filter" onchange="changeTopicFilter()" class="bg-slate-900 text-xs text-slate-200 border border-slate-800 rounded-xl px-3 py-2 outline-none focus:border-blue-500 w-full max-w-xs">
+                <option value="all">🔄 Все темы (Случайная генерация)</option>
+                <option value="composition">📦 Состав систем и ППК</option>
+                <option value="sensors">📡 Извещатели и Принцип Работы</option>
+                <option value="ranges">📏 Дальности и Зоны обнаружения</option>
+                <option value="project">📝 Проектирование (СНиП / ПУЭ)</option>
+            </select>
+        </div>
+
+        <!-- Question Card -->
+        <div class="custom-glass rounded-2xl p-6 md:p-8 border border-slate-800/80 shadow-2xl relative overflow-hidden">
+            <!-- Decorative Accent Blur -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            <!-- Meta info bar -->
+            <div class="flex justify-between items-center mb-5 border-b border-slate-800 pb-3">
+                <span id="q-category" class="text-[11px] font-bold uppercase tracking-wider text-blue-400 bg-blue-500/10 px-3 py-1 rounded-md border border-blue-500/20">
+                    Категория
+                </span>
+                <span id="q-counter" class="text-xs font-mono text-slate-400">Вопрос #1</span>
+            </div>
+
+            <!-- Question text -->
+            <h2 id="q-text" class="text-lg md:text-xl font-bold text-white mb-6 leading-relaxed">
+                Загрузка вопроса...
+            </h2>
+
+            <!-- Dynamic Answer Options -->
+            <div id="q-options" class="space-y-3 mb-6">
+                <!-- Buttons injected via JS -->
+            </div>
+
+            <!-- Explanation Feedback Box -->
+            <div id="q-feedback" class="hidden p-4 rounded-xl border transition-all text-sm leading-relaxed">
+                <!-- Feedback injected via JS -->
+            </div>
+
+            <!-- Action Toolbar -->
+            <div class="mt-6 flex justify-between items-center pt-4 border-t border-slate-800/80">
+                <button onclick="skipQuestion()" class="text-xs text-slate-500 hover:text-slate-300 transition-colors flex items-center gap-1">
+                    <i class="fas fa-forward"></i> Пропустить
+                </button>
+
+                <button id="btn-next" onclick="nextQuestion()" class="hidden px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold rounded-xl text-sm transition-all shadow-lg btn-glow flex items-center gap-2">
+                    <span>Следующий вопрос</span>
+                    <i class="fas fa-arrow-right text-xs"></i>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="custom-glass border-t border-slate-800/80 py-4 px-4 text-center text-xs text-slate-500">
+        Бесконечный тренажер запоминания. На основе ваших учебных материалов по Охранным Системам.
+    </footer>
+
+    <!-- Quiz Engine Script -->
+    <script>
+        // Knowledge Base extracted from user note
+        const database = [
+            // COMPOSITION & CONCEPTS
+            {
+                cat: "composition",
+                catName: "Состав систем и ППК",
+                q: "Каковы 4 компонента, входящие в МИНИМАЛЬНЫЙ состав охранной системы?",
+                options: [
+                    "БИРП, ППК, Извещатель, Оповещатель",
+                    "Сервер, Видеокамера, Извещатель, РМ",
+                    "ППК, Ручной извещатель, Пульт управления, АРМ",
+                    "БИРП, Геркон, Сирена, Релейный модуль"
+                ],
+                correct: 0,
+                exp: "Минимальный состав: 1. БИРП, 2. Прибор приемоконтрольный (ППК), 3. Извещатель, 4. Оповещатель."
+            },
+            {
+                cat: "composition",
+                catName: "Состав систем и ППК",
+                q: "Что из перечисленного входит в ДОПОЛНИТЕЛЬНЫЙ состав охранной системы?",
+                options: [
+                    "Релейный модуль (РМ) и Видеокамеры",
+                    "Извещатель и Оповещатель",
+                    "БИРП и ППК",
+                    "Только БИРП"
+                ],
+                correct: 0,
+                exp: "Дополнительный состав включает: Исполнительные устройства, Видеокамеры, Сервер, Пульт управления (ПУ), Релейный модуль (РМ), Преобразователи интерфейсов и АРМ."
+            },
+            {
+                cat: "composition",
+                catName: "Состав систем и ППК",
+                q: "Каково главное назначение охранной системы (ОС)?",
+                options: [
+                    "Предупредить, по возможности предотвратить вред людям или ценностям",
+                    "Автоматическое тушение пожара с помощью воды",
+                    "Только фиксация аудиосообщений",
+                    "Учет рабочего времени сотрудников"
+                ],
+                correct: 0,
+                exp: "Основное назначение ОС — предупредить, по возможности предотвратить или способствовать предотвращению ситуаций с вредом людям или материальным/нематериальным ценностям."
+            },
+            {
+                cat: "composition",
+                catName: "Состав систем и ППК",
+                q: "Как классифицируются охранные системы по принципу взаимодействия с угрозой?",
+                options: [
+                    "Пассивный и Активный",
+                    "Сетевой и Автономный",
+                    "Аналоговый и Адресный",
+                    "Проводной и Беспроводной"
+                ],
+                correct: 0,
+                exp: "По взаимодействию с угрозой: 1) Пассивный (привлечение внимания), 2) Активный (предотвращение проникновения)."
+            },
+            {
+                cat: "composition",
+                catName: "Состав систем и ППК",
+                q: "По информационной емкости (количеству ШС) ППК делятся на:",
+                options: [
+                    "Малая (до 5 ШС), Средняя (6-50 ШС), Большая (от 50 ШС)",
+                    "Малая (до 2 ШС), Средняя (3-5 ШС), Большая (от 10 ШС)",
+                    "Малая (1 ШС), Большая (свыше 100 ШС)",
+                    "Точечные, Линейные и Объемные"
+                ],
+                correct: 0,
+                exp: "Информационная емкость ППК: Малая (до 5 ШС), Средняя (от 6 до 50 ШС), Большая (от 50 ШС)."
+            },
+            {
+                cat: "composition",
+                catName: "Состав систем и ППК",
+                q: "По информативности (видам выдаваемых извещений) ППК бывают:",
+                options: [
+                    "Малый (до 2 видов), Средний (3-5 видов), Большой (Свыше 5 видов)",
+                    "Однопозиционные и Многопозиционные",
+                    "Аналоговые и Цифровые",
+                    "GSM, Wi-Fi и Радиоканал"
+                ],
+                correct: 0,
+                exp: "Информативность ППК: Малый (до 2 видов извещений), Средний (от 3 до 5 видов), Большой (свыше 5 видов)."
+            },
+
+            // SENSORS & WORKING PRINCIPLES
+            {
+                cat: "sensors",
+                catName: "Извещатели и Принцип Работы",
+                q: "Из каких ключевых элементов состоит магнитоконтактный извещатель?",
+                options: [
+                    "Герметизированный магнитоуправляемый контакт (ГЕРКОН) и магнит",
+                    "Пироэлектрический элемент и линза Френеля",
+                    "Микрофон и акустический фильтр",
+                    "Антенна и высокочастотный генератор"
+                ],
+                correct: 0,
+                exp: "Магнитоконтактный извещатель состоит из герметизированного магнито-управляемого контакта (ГЕРКОН) и магнита."
+            },
+            {
+                cat: "sensors",
+                catName: "Извещатели и Принцип Работы",
+                q: "На каком физическом принципе работает ЗВУКОВОЙ извещатель?",
+                options: [
+                    "Бесконтактный акустический контроль разрушения стекла по частотам звука",
+                    "Изменение электрической емкости антенного контура",
+                    "Регистрация разницы температур теплового излучения",
+                    "Подключение цепи потребляемого тока к ППК"
+                ],
+                correct: 0,
+                exp: "Звуковой извещатель предназначен для блокировки остекленных конструкций на разбитие путем контроля возникающих звуковых колебаний."
+            },
+            {
+                cat: "sensors",
+                catName: "Извещатели и Принцип Работы",
+                q: "Как работают ПАССИВНЫЕ оптико-электронные извещатели?",
+                options: [
+                    "Регистрируют разницу между ИК-излучением тела человека и фоновой температурой",
+                    "Излучают лазерный луч и принимают его отражение",
+                    "Измеряют электрическую емкость при поднесении руки",
+                    "Контролируют размыкание физических контактов"
+                ],
+                correct: 0,
+                exp: "Пассивные ИК извещатели регистрируют разницу ИК-излучения объекта и фона. Чувствительный элемент — пироэлектрический преобразователь с линзой или зеркалом."
+            },
+            {
+                cat: "sensors",
+                catName: "Извещатели и Принцип Работы",
+                q: "В чем разница между аналоговой и адресной проводной системой?",
+                options: [
+                    "В аналоговой ППК измеряет ток ШС, в адресной — каждый извещатель имеет цифровой адрес",
+                    "Аналоговая работает по Wi-Fi, адресная по кабелю",
+                    "В адресной системе нет ППК",
+                    "Аналоговая предназначена только для пожарной охраны"
+                ],
+                correct: 0,
+                exp: "Аналоговые ППК контролируют ШС по изменению потребляемого тока. В адресных системах у каждого извещателя есть уникальный адрес."
+            },
+            {
+                cat: "sensors",
+                catName: "Извещатели и Принцип Работы",
+                q: "На чем основан принцип работы ЕМКОСТНОГО извещателя?",
+                options: [
+                    "На изменении электрической емкости чувствительного элемента (антенны)",
+                    "На разрыве шлейфа сигнализации",
+                    "На прерывании оптического луча",
+                    "На измерении частоты звука"
+                ],
+                correct: 0,
+                exp: "Принцип работы емкостного извещателя основан на изменении электрической емкости чувствительного элемента (антенны)."
+            },
+
+            // RANGES & ZONES
+            {
+                cat: "ranges",
+                catName: "Дальности и Зоны обнаружения",
+                q: "К какому виду зон относится датчик движения над дверью типа «ШТОРА»?",
+                options: [
+                    "Поверхностные",
+                    "Точечные",
+                    "Линейные",
+                    "Объемные"
+                ],
+                correct: 0,
+                exp: "Поверхностные зоны образуют плоскость (как штора над дверью: пересекаешь — датчик срабатывает)."
+            },
+            {
+                cat: "ranges",
+                catName: "Дальности и Зоны обнаружения",
+                q: "Какова классификация по дальности действия для ЗАКРЫТЫХ помещений?",
+                options: [
+                    "Малая (до 12м), Средняя (12-30м), Высокая (30м)",
+                    "Малая (до 50м), Средняя (50-200м), Большая (свыше 200м)",
+                    "Малая (до 5м), Средняя (до 10м), Высокая (до 15м)",
+                    "Только одна категория — 100 метров"
+                ],
+                correct: 0,
+                exp: "Закрытые помещения: Малая (до 12 м), Средняя (от 12 до 30 м), Высокая (30 м)."
+            },
+            {
+                cat: "ranges",
+                catName: "Дальности и Зоны обнаружения",
+                q: "Какова дальность действия извещателей для ОТКРЫТЫХ площадок и периметров?",
+                options: [
+                    "Малая (до 50м), Средняя (50-200м), Большая (свыше 200м)",
+                    "Малая (до 12м), Средняя (12-30м), Высокая (30м)",
+                    "Малая (до 1м), Средняя (до 5м), Большая (до 10м)",
+                    "Не нормируется"
+                ],
+                correct: 0,
+                exp: "Открытые площадки: Малая (до 50 м), Средняя (от 50 до 200 м), Большая (Свыше 200 м)."
+            },
+            {
+                cat: "ranges",
+                catName: "Дальности и Зоны обнаружения",
+                q: "Чем отличаются ДВУХПОЗИЦИОННЫЕ извещатели по конструктивному исполнению?",
+                options: [
+                    "Передатчик и приемник выполнены в виде отдельных блоков",
+                    "Передатчик и приемник совмещены в одном блоке",
+                    "Состоят более чем из двух блоков",
+                    "Не требуют электропитания"
+                ],
+                correct: 0,
+                exp: "Однопозиционные — в одном блоке; Двухпозиционные — передатчик и приемник в виде отдельных блоков; Многопозиционные — более двух блоков."
+            },
+
+            // PROJECT & NORMS
+            {
+                cat: "project",
+                catName: "Проектирование (СНиП / ПУЭ)",
+                q: "В соответствии с каким ключевым СНиП разрабатывается проект охранных систем?",
+                options: [
+                    "СНиП - 11.01.95",
+                    "СНиП - 2.01.02",
+                    "СНиП - 31.06.2009",
+                    "ГОСТ Р 50775"
+                ],
+                correct: 0,
+                exp: "Проект разрабатывается в соответствии со СНиП - 11.01.95 (Инструкция о порядке разработки и составе проектно-сметной документации)."
+            },
+            {
+                cat: "project",
+                catName: "Проектирование (СНиП / ПУЭ)",
+                q: "Перечислите 3 стадии проектирования охранных систем по порядку:",
+                options: [
+                    "1. Проектная документация, 2. Рабочая документация, 3. Исполнительная документация",
+                    "1. Эскиз, 2. Монтаж, 3. Оплата",
+                    "1. Техническое задание, 2. Смета, 3. Договор",
+                    "1. Рабочая, 2. Исполнительная, 3. Архивная"
+                ],
+                correct: 0,
+                exp: "Проектирование осуществляется в 3 стадии: 1. Проектная документация, 2. Рабочая документация, 3. Исполнительная документация."
+            },
+            {
+                cat: "project",
+                catName: "Проектирование (СНиП / ПУЭ)",
+                q: "Какие руководящие правила подлежат безусловному выполнению при проектировании?",
+                options: [
+                    "ПУЭ (Правила устройства электроустановок) и СНиП",
+                    "Правила дорожного движения",
+                    "Устав вневедомственной охраны",
+                    "Инструкция завода-изготовителя видеокамер"
+                ],
+                correct: 0,
+                exp: "Основными директивными документами обязательного исполнения являются ПУЭ и СНиП."
+            },
+            {
+                cat: "project",
+                catName: "Проектирование (СНиП / ПУЭ)",
+                q: "Что входит в состав основной проектной документации?",
+                options: [
+                    "Титульный лист, Содержание, Схемы, План оборудования, Спецификация, Пояснительная записка",
+                    "Только чертежи здания без пояснительной записки",
+                    "Только чек на покупку приборов",
+                    "Акт списания материалов"
+                ],
+                correct: 0,
+                exp: "Состав: Титульный лист, Содержание, Функциональные схемы, План размещения оборудования, Схема соединений, Спецификация, Пояснительная записка."
+            }
+        ];
+
+        // Engine State
+        let totalAnswered = 0;
+        let totalCorrect = 0;
+        let streak = 0;
+        let currentQ = null;
+
+        function getRandomQuestion() {
+            const filter = document.getElementById('topic-filter').value;
+            let pool = database;
+            if (filter !== 'all') {
+                pool = database.filter(item => item.cat === filter);
+            }
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            return pool[randomIndex];
+        }
+
+        function renderQuestion() {
+            currentQ = getRandomQuestion();
+            
+            document.getElementById('q-category').innerText = currentQ.catName;
+            document.getElementById('q-counter').innerText = `Вопрос #${totalAnswered + 1}`;
+            document.getElementById('q-text').innerText = currentQ.q;
+
+            const optionsContainer = document.getElementById('q-options');
+            optionsContainer.innerHTML = '';
+
+            // Shuffle options for training effect
+            const optionsWithIndices = currentQ.options.map((opt, idx) => ({ text: opt, isCorrect: idx === currentQ.correct }));
+            optionsWithIndices.sort(() => 0.5 - Math.random());
+
+            optionsWithIndices.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'option-card w-full p-4 rounded-xl border border-slate-800 bg-slate-900/60 text-left text-slate-200 text-sm font-medium flex items-center justify-between gap-3';
+                btn.innerHTML = `
+                    <span class="flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-lg bg-slate-800 text-slate-400 text-xs flex items-center justify-center font-bold">${String.fromCharCode(65 + index)}</span>
+                        <span>${item.text}</span>
+                    </span>
+                    <i class="far fa-circle text-slate-600 font-lg"></i>
+                `;
+                btn.onclick = () => checkAnswer(btn, item.isCorrect);
+                optionsContainer.appendChild(btn);
+            });
+
+            // Reset Feedback & Next button
+            const feedback = document.getElementById('q-feedback');
+            feedback.className = 'hidden p-4 rounded-xl border text-sm leading-relaxed';
+            feedback.innerHTML = '';
+            document.getElementById('btn-next').classList.add('hidden');
+        }
+
+        function checkAnswer(selectedBtn, isCorrect) {
+            const buttons = document.getElementById('q-options').children;
+            for (let btn of buttons) {
+                btn.disabled = true;
+            }
+
+            totalAnswered++;
+            const feedback = document.getElementById('q-feedback');
+            feedback.classList.remove('hidden');
+
+            if (isCorrect) {
+                totalCorrect++;
+                streak++;
+                selectedBtn.className = 'w-full p-4 rounded-xl border border-emerald-500 bg-emerald-950/40 text-left text-emerald-200 text-sm font-medium flex items-center justify-between gap-3';
+                selectedBtn.querySelector('i').className = 'fas fa-check-circle text-emerald-400 text-lg';
+                
+                feedback.className = 'p-4 rounded-xl border border-emerald-500/40 bg-emerald-950/30 text-emerald-300 text-sm';
+                feedback.innerHTML = `<p class="font-bold mb-1 flex items-center gap-2"><i class="fas fa-check"></i> Правильно!</p><p>${currentQ.exp}</p>`;
+            } else {
+                streak = 0;
+                selectedBtn.className = 'w-full p-4 rounded-xl border border-red-500 bg-red-950/40 text-left text-red-200 text-sm font-medium flex items-center justify-between gap-3';
+                selectedBtn.querySelector('i').className = 'fas fa-times-circle text-red-400 text-lg';
+
+                feedback.className = 'p-4 rounded-xl border border-red-500/40 bg-red-950/30 text-red-300 text-sm';
+                feedback.innerHTML = `<p class="font-bold mb-1 flex items-center gap-2"><i class="fas fa-times"></i> Ошибка!</p><p>${currentQ.exp}</p>`;
+            }
+
+            updateStats();
+            document.getElementById('btn-next').classList.remove('hidden');
+        }
+
+        function updateStats() {
+            document.getElementById('stat-correct').innerText = totalCorrect;
+            const accuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
+            document.getElementById('stat-accuracy').innerText = `${accuracy}%`;
+            document.getElementById('stat-streak').innerText = `🔥 ${streak}`;
+        }
+
+        function nextQuestion() {
+            renderQuestion();
+        }
+
+        function skipQuestion() {
+            renderQuestion();
+        }
+
+        function changeTopicFilter() {
+            renderQuestion();
+        }
+
+        // Init on load
+        window.onload = function() {
+            renderQuestion();
+        };
+    </script>
+</body>
+</html>
